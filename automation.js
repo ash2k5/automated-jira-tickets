@@ -14,11 +14,11 @@
  * - Logs all processing activities
  */
 
-const Imap = require('node-imap');
-const { simpleParser } = require('mailparser');
-const nodemailer = require('nodemailer');
-const axios = require('axios');
-const cron = require('node-cron');
+import Imap from 'node-imap';
+import { simpleParser } from 'mailparser';
+import nodemailer from 'nodemailer';
+import axios from 'axios';
+import cron from 'node-cron';
 
 // Configuration from environment variables
 const CONFIG = {
@@ -440,8 +440,8 @@ process.on('uncaughtException', (error) => {
 });
 
 // Start the application
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(console.error);
 }
 
-module.exports = { EmailToJiraProcessor, CONFIG };
+export { EmailToJiraProcessor, CONFIG };
