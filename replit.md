@@ -1,53 +1,48 @@
 # Overview
 
-This is an email-to-Jira automation system that processes incoming emails and creates Jira tasks automatically. The system features a React-based dashboard for monitoring and configuration, an Express.js backend for email processing and API handling, and integrations with IMAP email servers and Jira REST API. Users can configure system settings, monitor processing logs, test connections, and view system statistics through an intuitive web interface.
+This is a streamlined email-to-Jira automation script that processes incoming emails and creates Jira tasks automatically. The system is designed as a standalone Node.js application that runs continuously in the background, monitoring an email inbox and creating corresponding Jira tasks without requiring a web interface.
 
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Preferred deployment: Background automation script without dashboard interface.
 
 # System Architecture
 
-## Frontend Architecture
-The client application uses a modern React stack with TypeScript, built around a single-page application (SPA) architecture. The UI is built with shadcn/ui components providing a consistent design system, with Tailwind CSS for styling and Wouter for lightweight client-side routing. The frontend uses TanStack Query for server state management and form handling through React Hook Form with Zod validation. The application follows a component-based architecture with reusable UI components, custom hooks for mobile responsiveness, and a centralized query client for API communication.
+## Core Application
+The application is built as a single Node.js script (`automation.js`) that handles all functionality:
+- **Email Processing**: Monitors IMAP email server for new messages
+- **Jira Integration**: Creates tasks via Jira REST API with email content
+- **Notification System**: Sends email notifications when tasks are created
+- **Scheduled Execution**: Runs on configurable intervals using cron scheduling
+- **Error Handling**: Comprehensive logging and error management
 
-## Backend Architecture  
-The server implements a RESTful API using Express.js with TypeScript, following a modular service-oriented architecture. The main components include:
-- **Storage Layer**: An abstraction layer with in-memory storage implementation for user data, email logs, system configuration, and statistics
-- **Email Processing Service**: Handles IMAP connections to email servers, parses incoming emails, and processes them asynchronously  
-- **Jira Integration Service**: Manages Jira API communication for creating tasks and handling authentication
-- **Notification Service**: Sends email notifications using SMTP when tasks are created or errors occur
-- **Cron Scheduling**: Automated email processing on configurable intervals
-
-## Data Storage
-The application uses a hybrid storage approach with Drizzle ORM configured for PostgreSQL production deployments, while implementing an in-memory storage system for development and testing. The schema defines tables for users, email logs, system configuration, and statistics. Database migrations are managed through Drizzle Kit, and the system supports both development and production database environments.
-
-## Authentication & Security
-The system implements basic authentication mechanisms and uses environment variables for sensitive configuration like API keys and database credentials. CORS is configured for cross-origin requests, and the API includes error handling middleware for proper error responses.
+## Key Features
+- Automated email monitoring every 10 minutes (configurable)
+- Email subject becomes Jira task title
+- Email body becomes Jira task description  
+- Task is not assigned to anyone (as requested)
+- Notification email sent to designated address with task link
+- Processed emails are marked as read to avoid duplicates
 
 # External Dependencies
 
-## Database Services
-- **Neon Database**: Serverless PostgreSQL database service for production data storage
-- **Drizzle ORM**: Type-safe database toolkit with PostgreSQL dialect support
+## Core Dependencies
+- **Node.js**: Runtime environment for the automation script
+- **node-imap**: IMAP client for connecting to email servers
+- **mailparser**: Email content parsing and processing
+- **nodemailer**: SMTP client for sending notification emails
+- **axios**: HTTP client for Jira REST API communication
+- **node-cron**: Task scheduling for automated email processing
 
 ## Email Services  
 - **IMAP Integration**: Connects to email servers (Gmail, corporate email) for reading incoming messages
 - **SMTP Integration**: Sends outbound notifications through email service providers
-- **Mailparser**: Parses email content and attachments from IMAP messages
 
 ## Third-Party APIs
 - **Jira REST API**: Creates and manages Jira tasks programmatically using Basic authentication
-- **Axios HTTP Client**: Handles API requests to external services with proper error handling
 
-## UI Framework & Styling
-- **Radix UI**: Headless component library providing accessible UI primitives
-- **Tailwind CSS**: Utility-first CSS framework for responsive design
-- **shadcn/ui**: Pre-built component library built on Radix UI and Tailwind
-- **Lucide React**: Icon library for consistent iconography
-
-## Development & Build Tools
-- **Vite**: Fast build tool and development server with HMR support
-- **TypeScript**: Static type checking across frontend and backend
-- **ESBuild**: JavaScript bundler for production builds
-- **Replit Integration**: Development environment plugins and runtime error handling
+## Deployment Options
+- **Docker**: Containerized deployment with health checks
+- **PM2**: Process manager for production Node.js applications
+- **Systemd**: Linux service for automatic startup and monitoring
