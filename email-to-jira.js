@@ -30,17 +30,31 @@ function processEmails() {
       return;
     }
     
-    console.log('Found ' + threads.length + ' new email thread(s)');
+    console.log('Found ' + threads.length + ' unread email thread(s)');
+    
+    // Only process emails from the last 15 minutes (buffer for processing)
+    const cutoffTime = new Date(Date.now() - 15 * 60 * 1000);
+    let processedCount = 0;
     
     threads.forEach(thread => {
       const messages = thread.getMessages();
       messages.forEach(message => {
         if (message.isUnread()) {
-          handleEmail(message);
+          const emailDate = message.getDate();
+          
+          if (emailDate >= cutoffTime) {
+            handleEmail(message);
+            processedCount++;
+          } else {
+            console.log('Skipping old email: ' + message.getSubject() + ' from ' + emailDate);
+          }
+          
           message.markRead();
         }
       });
     });
+    
+    console.log('Processed ' + processedCount + ' recent emails');
     
   } catch (error) {
     console.error('Error processing emails: ' + error.toString());
