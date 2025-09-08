@@ -112,15 +112,33 @@ function createJiraTask(subject, body, sender) {
  */
 function sendNotification(originalSubject, sender, jiraTask) {
   const subject = 'New Jira Task: ' + jiraTask.key;
-  const body = 'A new Jira task has been created from an email request:\n\n' +
-                'Task: ' + jiraTask.key + '\n' +
-                'Subject: ' + originalSubject + '\n' +
-                'From: ' + sender + '\n' +
-                'Created: ' + new Date().toLocaleString() + '\n\n' +
-                'View task: ' + jiraTask.url + '\n\n' +
-                'This is an automated notification from the Email-to-Jira system.';
+  const bodyText = 'A new Jira task has been created from an email request:\n\n' +
+                   'Task: ' + jiraTask.key + '\n' +
+                   'Subject: ' + originalSubject + '\n' +
+                   'From: ' + sender + '\n' +
+                   'Created: ' + new Date().toLocaleString() + '\n\n' +
+                   'View task: ' + jiraTask.url + '\n\n' +
+                   'This is an automated notification from the Email-to-Jira system.';
 
-  GmailApp.sendEmail(CONFIG.notificationEmail, subject, body);
+  // Create raw email message
+  const email = [
+    'From: itrequests@nrinstitute.org',
+    'To: ' + CONFIG.notificationEmail,
+    'Subject: ' + subject,
+    '',
+    bodyText
+  ].join('\r\n');
+
+  const base64EncodedEmail = Utilities.base64EncodeWebSafe(email);
+
+  try {
+    Gmail.Users.Messages.send({
+      'raw': base64EncodedEmail
+    }, 'me');
+  } catch (error) {
+    console.error('Failed to send notification via Gmail API, falling back to GmailApp: ' + error.toString());
+    GmailApp.sendEmail(CONFIG.notificationEmail, subject, bodyText);
+  }
 }
 
 /**
