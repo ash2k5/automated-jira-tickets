@@ -120,7 +120,9 @@ function sendNotification(originalSubject, sender, jiraTask) {
                 'View task: ' + jiraTask.url + '\n\n' +
                 'This is an automated notification from the Email-to-Jira system.';
 
-  GmailApp.sendEmail(CONFIG.notificationEmail, subject, body);
+  GmailApp.sendEmail(CONFIG.notificationEmail, subject, body, {
+    from: 'itrequests@nrinstitute.org'
+  });
 }
 
 /**
