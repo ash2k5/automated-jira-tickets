@@ -1,4 +1,4 @@
-# Email to Jira Automation - Production Ready
+# Email to Jira Automation 
 
 Automatically creates Jira tasks from emails sent to `itrequests@nrinstitute.org` and notifies the designated team member.
 
@@ -42,7 +42,7 @@ npm start
 - Email body becomes task description  
 - Task is created unassigned in NRTT project
 
-### For Brian Wilson:
+### Gmail Notification:
 - Receives notification email for each new task
 - Email includes task number, subject, sender, and direct link
 
