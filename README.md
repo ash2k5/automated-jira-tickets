@@ -13,11 +13,13 @@ Automatically creates Jira tasks from emails sent to `itrequests@nrinstitute.org
 # Install dependencies for local testing
 npm install
 
-# Copy environment template
+# Copy environment template and edit with your credentials
 cp .env.example .env
-# Edit .env with your credentials
 
-# Test locally (Node.js version)
+# Quick Jira connection test
+node test-local.js
+
+# Full local testing (requires email setup)
 npm start
 ```
 
@@ -48,7 +50,7 @@ npm start
 
 ### Automation Details:
 - Checks every 10 minutes for new emails
-- Processes unread emails only
+- **Only processes emails from the last 15 minutes** (prevents old email processing)
 - Marks processed emails as read
 - Sends notifications using Google Apps Script's built-in Gmail service
 
@@ -69,6 +71,7 @@ All settings are configured in the `CONFIG` object in `email-to-jira.js`:
 ├── src/
 │   └── notification-service.js # Email notifications (for local testing)
 ├── email-to-jira.js           # Main Google Apps Script file (PRODUCTION)
+├── test-local.js              # Quick Jira connection test
 ├── index.js                   # Node.js version for local testing
 ├── package.json               # Dependencies for local testing
 ├── .env.example               # Configuration template  
