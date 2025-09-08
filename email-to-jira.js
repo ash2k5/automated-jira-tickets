@@ -12,7 +12,7 @@ const CONFIG = {
   jiraEmail: 'asantosh@nrinstitute.org',
   jiraToken: 'ATATT3xFfGF0mYAyp4s6Pl4dMxpPX4WxSiNGLpVDl-tOaBfzOrMJzIXbrXsIGtrEsI7yA-tSO_ARp9iOIHvsOlSN8vfuKg_wISknXiHWYMctq4IesqjzjYzQb-HEaxqsiiivLxQhG0CrtxL1ZtUSNXE27T2zey0MFxWzQq2XkuiwPXSGgNjdGR8=4058B09B',
   jiraProject: 'NRTT',
-  notificationEmail: 'bwilson@nationalreview.com'
+  notificationEmails: ['bwilson@nationalreview.com', 'rjenkins@nationalreview.com']
 };
 
 /**
@@ -76,7 +76,7 @@ function handleEmail(message) {
     console.log('Created Jira task: ' + jiraTask.key);
     
     sendNotification(subject, sender, jiraTask);
-    console.log('Notification sent to ' + CONFIG.notificationEmail);
+    console.log('Notifications sent to ' + CONFIG.notificationEmails.join(', '));
     
   } catch (error) {
     console.error('Failed to process email: ' + error.toString());
@@ -134,25 +134,32 @@ function sendNotification(originalSubject, sender, jiraTask) {
                    'View task: ' + jiraTask.url + '\n\n' +
                    'This is an automated notification from the Email-to-Jira system.';
 
-  // Create raw email message
-  const email = [
-    'From: itrequests@nrinstitute.org',
-    'To: ' + CONFIG.notificationEmail,
-    'Subject: ' + subject,
-    '',
-    bodyText
-  ].join('\r\n');
+  // Send to each notification email
+  CONFIG.notificationEmails.forEach(email => {
+    try {
+      // Create raw email message for Gmail API
+      const rawEmail = [
+        'From: itrequests@nrinstitute.org',
+        'To: ' + email,
+        'Subject: ' + subject,
+        '',
+        bodyText
+      ].join('\r\n');
 
-  const base64EncodedEmail = Utilities.base64EncodeWebSafe(email);
+      const base64EncodedEmail = Utilities.base64EncodeWebSafe(rawEmail);
 
-  try {
-    Gmail.Users.Messages.send({
-      'raw': base64EncodedEmail
-    }, 'me');
-  } catch (error) {
-    console.error('Failed to send notification via Gmail API, falling back to GmailApp: ' + error.toString());
-    GmailApp.sendEmail(CONFIG.notificationEmail, subject, bodyText);
-  }
+      try {
+        Gmail.Users.Messages.send({
+          'raw': base64EncodedEmail
+        }, 'me');
+      } catch (apiError) {
+        console.error('Failed to send notification via Gmail API to ' + email + ', falling back to GmailApp: ' + apiError.toString());
+        GmailApp.sendEmail(email, subject, bodyText);
+      }
+    } catch (error) {
+      console.error('Failed to send notification to ' + email + ': ' + error.toString());
+    }
+  });
 }
 
 /**
@@ -197,7 +204,7 @@ function testSetup() {
     
     // Test notification
     sendNotification('Test: Email-to-Jira Setup Verification', 'automation-test@system', testTask);
-    console.log('Test notification sent to ' + CONFIG.notificationEmail);
+    console.log('Test notifications sent to ' + CONFIG.notificationEmails.join(', '));
     
     console.log('Setup test completed successfully! Ready for production.');
     
