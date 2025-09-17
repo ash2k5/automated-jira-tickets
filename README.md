@@ -105,13 +105,6 @@ JIRA_PROJECT=YOUR_PROJECT_KEY
 EMAIL_PASSWORD=your_email_app_password
 ```
 
-## Security Notes
-
-- Never commit your `.env` file or API tokens to version control
-- Use Jira API tokens instead of passwords
-- Ensure proper Google Workspace permissions are configured
-- Review and sanitize all configuration before deployment
-
 ## License
 
 MIT License - feel free to use and modify as needed.
