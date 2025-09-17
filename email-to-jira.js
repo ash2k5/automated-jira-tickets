@@ -19,7 +19,7 @@ const CONFIG = {
  * Main function to process emails and create Jira tasks
  * Triggered automatically every 10 minutes
  */
-function processEmails() {
+function checkForNewEmails() {
   console.log('Checking for new emails...');
   
   try {
@@ -170,13 +170,13 @@ function setupTrigger() {
   // Delete existing triggers first to avoid duplicates
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => {
-    if (trigger.getHandlerFunction() === 'processEmails') {
+    if (trigger.getHandlerFunction() === 'checkForNewEmails') {
       ScriptApp.deleteTrigger(trigger);
     }
   });
   
   // Create new trigger to run every 10 minutes
-  ScriptApp.newTrigger('processEmails')
+  ScriptApp.newTrigger('checkForNewEmails')
     .timeBased()
     .everyMinutes(10)
     .create();
