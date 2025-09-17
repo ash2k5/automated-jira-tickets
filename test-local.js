@@ -8,7 +8,7 @@ const CONFIG = {
   jiraEmail: process.env.JIRA_EMAIL,
   jiraToken: process.env.JIRA_API_TOKEN,
   jiraProject: process.env.JIRA_PROJECT,
-  notificationEmail: 'bwilson@nationalreview.com'
+  notificationEmail: process.env.NOTIFICATION_EMAIL || 'team@company.com'
 };
 
 async function createJiraTask(subject, body, sender) {

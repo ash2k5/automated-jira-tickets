@@ -1,6 +1,10 @@
-# Email to Jira Automation 
+# Email to Jira Automation
 
-Automatically creates Jira tasks from emails sent to `itrequests@nrinstitute.org` and notifies the designated team member.
+Automatically creates Jira tasks from emails sent to a monitored email address and notifies designated team members.
+
+## Overview
+
+This project provides a complete email-to-Jira automation solution using Google Apps Script. It monitors a specific email address for incoming requests and automatically converts them into Jira tasks with notifications.
 
 ## Final Production File
 
@@ -27,22 +31,23 @@ npm start
 1. **Go to:** https://script.google.com
 2. **Create New Project** named "Email-to-Jira-Automation"
 3. **Copy entire content** from `email-to-jira.js`
-4. **Test the setup:**
+4. **Update configuration** in the `CONFIG` object with your settings
+5. **Test the setup:**
    - Run function: `testSetup()`
    - Check console for success messages
-   - Verify test task created in Jira NRTT project
-   - Confirm notification sent to `bwilson@nationalreview.com`
-5. **Activate automation:**
+   - Verify test task created in your Jira project
+   - Confirm notification sent to designated email
+6. **Activate automation:**
    - Run function: `setupTrigger()`
    - Automation is now live - checks every 10 minutes
 
 ## How It Works
 
 ### For Team Members:
-- Send email to: `itrequests@nrinstitute.org`
+- Send email to your configured monitoring address
 - Email subject becomes Jira task title
-- Email body becomes task description  
-- Task is created unassigned in NRTT project
+- Email body becomes task description
+- Task is created unassigned in your specified Jira project
 
 ### Gmail Notification:
 - Receives notification email for each new task
@@ -57,11 +62,11 @@ npm start
 ## Configuration
 
 All settings are configured in the `CONFIG` object in `email-to-jira.js`:
-- **Jira URL:** `https://nationalreview.atlassian.net`
-- **Jira Project:** `NRTT`
-- **Jira Email:** `asantosh@nrinstitute.org`
-- **Notification Email:** `bwilson@nationalreview.com`
-- **Monitored Email:** `itrequests@nrinstitute.org`
+- **Jira URL:** `https://your-domain.atlassian.net`
+- **Jira Project:** `YOUR_PROJECT_KEY`
+- **Jira Email:** `your-jira-user@company.com`
+- **Notification Emails:** `['team-member@company.com']`
+- **Monitored Email:** `support@company.com`
 
 ## Project Structure
 
@@ -74,16 +79,39 @@ All settings are configured in the `CONFIG` object in `email-to-jira.js`:
 ├── test-local.js              # Quick Jira connection test
 ├── index.js                   # Node.js version for local testing
 ├── package.json               # Dependencies for local testing
-├── .env.example               # Configuration template  
+├── .env.example               # Configuration template
 └── README.md                  # This file
 ```
 
+## Features
 
-The `email-to-jira.js` file contains:
-- All required configuration
-- Error handling  
-- Logging 
-- Google Apps Script code
-- Gmail service integration
-- Automatic trigger setup
-- Test verification function
+The `email-to-jira.js` file provides:
+- Complete email-to-Jira automation
+- Robust error handling and logging
+- Gmail API integration with fallback mechanisms
+- Automatic trigger setup for scheduled execution
+- Test verification functions
+- Timestamp-based filtering to prevent duplicate processing
+- Multi-recipient notification system
+
+## Environment Variables
+
+Create a `.env` file for local testing:
+```
+JIRA_URL=https://your-domain.atlassian.net
+JIRA_EMAIL=your-jira-user@company.com
+JIRA_API_TOKEN=your_jira_api_token
+JIRA_PROJECT=YOUR_PROJECT_KEY
+EMAIL_PASSWORD=your_email_app_password
+```
+
+## Security Notes
+
+- Never commit your `.env` file or API tokens to version control
+- Use Jira API tokens instead of passwords
+- Ensure proper Google Workspace permissions are configured
+- Review and sanitize all configuration before deployment
+
+## License
+
+MIT License - feel free to use and modify as needed.

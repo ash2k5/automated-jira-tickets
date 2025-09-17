@@ -9,18 +9,18 @@ dotenv.config();
 
 export const config = {
   // Email settings
-  emailUser: process.env.EMAIL_USER || 'itrequests@nrinstitute.org',
+  emailUser: process.env.EMAIL_USER || 'support@company.com',
   emailPassword: process.env.EMAIL_PASSWORD,
-  
-  // Jira settings  
-  jiraUrl: process.env.JIRA_URL || 'https://nationalreview.atlassian.net',
-  jiraEmail: process.env.JIRA_EMAIL || 'asantosh@nrinstitute.org',
+
+  // Jira settings
+  jiraUrl: process.env.JIRA_URL || 'https://your-domain.atlassian.net',
+  jiraEmail: process.env.JIRA_EMAIL || 'your-jira-user@company.com',
   jiraToken: process.env.JIRA_API_TOKEN,
-  jiraProject: process.env.JIRA_PROJECT || 'NRTT',
-  
+  jiraProject: process.env.JIRA_PROJECT || 'YOUR_PROJECT_KEY',
+
   // Notification settings
-  notificationEmail: 'bwilson@nationalreview.com',
-  
+  notificationEmail: process.env.NOTIFICATION_EMAIL || 'team@company.com',
+
   // Scheduling
   checkIntervalMinutes: 10
 };

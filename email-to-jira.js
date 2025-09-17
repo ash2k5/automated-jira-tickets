@@ -1,18 +1,18 @@
 /**
  * Email to Jira Automation
  * 
- * Automatically creates Jira tasks from emails sent to itrequests@nrinstitute.org
- * and sends notifications to the designated team member.
- * 
+ * Automatically creates Jira tasks from emails sent to a monitored address
+ * and sends notifications to designated team members.
+ *
  * For Google Workspace Admin deployment.
  */
 
 const CONFIG = {
-  jiraUrl: 'https://nationalreview.atlassian.net',
-  jiraEmail: 'asantosh@nrinstitute.org',
-  jiraToken: 'ATATT3xFfGF0mYAyp4s6Pl4dMxpPX4WxSiNGLpVDl-tOaBfzOrMJzIXbrXsIGtrEsI7yA-tSO_ARp9iOIHvsOlSN8vfuKg_wISknXiHWYMctq4IesqjzjYzQb-HEaxqsiiivLxQhG0CrtxL1ZtUSNXE27T2zey0MFxWzQq2XkuiwPXSGgNjdGR8=4058B09B',
-  jiraProject: 'NRTT',
-  notificationEmails: ['bwilson@nationalreview.com', 'rjenkins@nationalreview.com']
+  jiraUrl: 'https://your-domain.atlassian.net',
+  jiraEmail: 'your-jira-user@company.com',
+  jiraToken: 'your_jira_api_token_here',
+  jiraProject: 'YOUR_PROJECT_KEY',
+  notificationEmails: ['team-member1@company.com', 'team-member2@company.com']
 };
 
 /**
@@ -23,10 +23,10 @@ function checkForNewEmails() {
   console.log('Checking for new emails...');
   
   try {
-    const threads = GmailApp.search('to:itrequests@nrinstitute.org is:unread', 0, 50);
+    const threads = GmailApp.search('to:support@company.com is:unread', 0, 50);
     
     if (threads.length === 0) {
-      console.log('No new emails to itrequests@nrinstitute.org');
+      console.log('No new emails to monitored address');
       return;
     }
     
@@ -139,7 +139,7 @@ function sendNotification(originalSubject, sender, jiraTask) {
     try {
       // Create raw email message for Gmail API
       const rawEmail = [
-        'From: itrequests@nrinstitute.org',
+        'From: support@company.com',
         'To: ' + email,
         'Subject: ' + subject,
         '',
