@@ -3,17 +3,12 @@
   "version": "1.0.0",
   "description": "Automation to create Jira tasks from emails",
   "type": "module",
-  "main": "index.js",
+  "main": "test.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
-    "test": "node test.js",
-    "setup": "node setup.js"
+    "test": "node test.js"
   },
   "dependencies": {
-    "dotenv": "^17.2.2",
-    "node-imap": "^0.9.6",
-    "mailparser": "^3.7.4"
+    "dotenv": "^17.2.2"
   },
   "devDependencies": {
     "@types/node": "^20.16.11"

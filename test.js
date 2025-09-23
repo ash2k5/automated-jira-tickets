@@ -20,9 +20,9 @@ async function createJiraTask(subject, body, sender) {
       issuetype: { name: 'Task' }
     }
   };
-  
+
   const auth = Buffer.from(`${CONFIG.jiraEmail}:${CONFIG.jiraToken}`).toString('base64');
-  
+
   const response = await fetch(`${CONFIG.jiraUrl}/rest/api/2/issue`, {
     method: 'POST',
     headers: {
@@ -31,13 +31,13 @@ async function createJiraTask(subject, body, sender) {
     },
     body: JSON.stringify(taskData)
   });
-  
+
   if (!response.ok) {
     throw new Error(`Jira API error: ${response.status} - ${await response.text()}`);
   }
-  
+
   const responseData = await response.json();
-  
+
   return {
     key: responseData.key,
     url: `${CONFIG.jiraUrl}/browse/${responseData.key}`
@@ -46,20 +46,20 @@ async function createJiraTask(subject, body, sender) {
 
 async function testSetup() {
   console.log('Testing local Jira connection...');
-  
+
   try {
     const testTask = await createJiraTask(
-      'Test: Local Node.js Setup Verification', 
-      'This is a test task created during local setup. You can delete this task.', 
+      'Test: Local Node.js Setup Verification',
+      'This is a test task created during local setup. You can delete this task.',
       'local-test@system'
     );
-    
-    console.log(' Jira connection successful:', testTask.key);
-    console.log(' Test task URL:', testTask.url);
-    console.log(' Local setup test completed successfully!');
-    
+
+    console.log('Jira connection successful:', testTask.key);
+    console.log('Test task URL:', testTask.url);
+    console.log('Local setup test completed successfully!');
+
   } catch (error) {
-    console.error(' Setup test failed:', error.message);
+    console.error('Setup test failed:', error.message);
   }
 }
 

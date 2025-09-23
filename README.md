@@ -6,9 +6,9 @@ Automatically creates Jira tasks from emails sent to a monitored email address a
 
 This project provides a complete email-to-Jira automation solution using Google Apps Script. It monitors a specific email address for incoming requests and automatically converts them into Jira tasks with notifications.
 
-## Final Production File
+## Production File
 
-**`email-to-jira.js`** - Main Google Apps Script file ready for Google Workspace Admin deployment
+**`automation.js`** - Google Apps Script file for deployment
 
 ## Pre-Deployment Setup & Testing
 
@@ -21,7 +21,7 @@ npm install
 cp .env.example .env
 
 # Quick Jira connection test
-node test-local.js
+node test.js
 
 # Full local testing (requires email setup)
 npm start
@@ -30,7 +30,7 @@ npm start
 ### 2. Google Apps Script Testing
 1. **Go to:** https://script.google.com
 2. **Create New Project** named "Email-to-Jira-Automation"
-3. **Copy entire content** from `email-to-jira.js`
+3. **Copy entire content** from `automation.js`
 4. **Update configuration** in the `CONFIG` object with your settings
 5. **Test the setup:**
    - Run function: `testSetup()`
@@ -71,13 +71,8 @@ All settings are configured in the `CONFIG` object in `email-to-jira.js`:
 ## Project Structure
 
 ```
-├── config/
-│   └── config.js              # Application configuration (for local testing)
-├── src/
-│   └── notification-service.js # Email notifications (for local testing)
-├── email-to-jira.js           # Main Google Apps Script file (PRODUCTION)
-├── test-local.js              # Quick Jira connection test
-├── index.js                   # Node.js version for local testing
+├── automation.js              # Google Apps Script file (PRODUCTION)
+├── test.js                    # Quick Jira connection test
 ├── package.json               # Dependencies for local testing
 ├── .env.example               # Configuration template
 └── README.md                  # This file
@@ -85,7 +80,7 @@ All settings are configured in the `CONFIG` object in `email-to-jira.js`:
 
 ## Features
 
-The `email-to-jira.js` file provides:
+The `automation.js` file provides:
 - Complete email-to-Jira automation
 - Robust error handling and logging
 - Gmail API integration with fallback mechanisms
