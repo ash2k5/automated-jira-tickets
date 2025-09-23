@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Automation to create Jira tasks from emails",
   "type": "module",
-  "main": "test.js",
+  "main": "tests/test.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "node tests/test.js"
   },
   "dependencies": {
     "dotenv": "^17.2.2"

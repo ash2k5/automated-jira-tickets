@@ -61,7 +61,7 @@ npm start
 
 ## Configuration
 
-All settings are configured in the `CONFIG` object in `email-to-jira.js`:
+All settings are configured in the `CONFIG` object in `src/automation.js`:
 - **Jira URL:** `https://your-domain.atlassian.net`
 - **Jira Project:** `YOUR_PROJECT_KEY`
 - **Jira Email:** `your-jira-user@company.com`
