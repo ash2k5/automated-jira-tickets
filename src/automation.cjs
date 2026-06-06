@@ -1,3 +1,8 @@
+/* exported processEmails, setupTrigger, testSetup */
+// Google Apps Script: email -> Jira task automation.
+// Paste into the Apps Script editor. The module.exports block at the bottom is
+// inert in Apps Script (no `module`) and only exposes pure helpers to Node tests.
+
 const CONFIG = {
   jiraUrl: 'https://your-domain.atlassian.net',
   jiraEmail: 'your-jira-user@company.com',
@@ -6,6 +11,96 @@ const CONFIG = {
   monitoredEmail: 'support@company.com',
   notificationEmails: ['team-member1@company.com', 'team-member2@company.com']
 };
+
+const SUMMARY_MAX_LENGTH = 255;
+const DESCRIPTION_MAX_LENGTH = 32767;
+const PROCESSED_ID_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function truncateSummary(subject, max) {
+  const limit = max || SUMMARY_MAX_LENGTH;
+  const cleaned = String(subject || '').replace(/\s+/g, ' ').trim();
+  if (cleaned === '') {
+    return 'No Subject';
+  }
+  if (cleaned.length <= limit) {
+    return cleaned;
+  }
+  return cleaned.slice(0, limit - 3).trimEnd() + '...';
+}
+
+function buildDescription(sender, body, now) {
+  const text = String(body || '').trim() || 'No content';
+  const description = 'From: ' + sender + '\nDate: ' + now.toLocaleString() + '\n\n' + text;
+  if (description.length <= DESCRIPTION_MAX_LENGTH) {
+    return description;
+  }
+  return description.slice(0, DESCRIPTION_MAX_LENGTH - 3) + '...';
+}
+
+function buildIssuePayload(subject, body, sender, projectKey, now) {
+  return {
+    fields: {
+      project: { key: projectKey },
+      summary: truncateSummary(subject),
+      description: buildDescription(sender, body, now),
+      issuetype: { name: 'Task' }
+    }
+  };
+}
+
+function parseIssueResult(responseText, baseUrl) {
+  const data = JSON.parse(responseText);
+  if (!data.key) {
+    throw new Error('Jira response missing issue key');
+  }
+  return {
+    key: data.key,
+    url: baseUrl + '/browse/' + data.key
+  };
+}
+
+function isSelfSent(fromHeader, monitoredEmail) {
+  if (!monitoredEmail) {
+    return false;
+  }
+  return String(fromHeader || '').toLowerCase().indexOf(String(monitoredEmail).toLowerCase()) !== -1;
+}
+
+function pruneProcessedIds(processedIds, nowMs, maxAgeMs) {
+  const cutoff = nowMs - (maxAgeMs || PROCESSED_ID_TTL_MS);
+  const pruned = {};
+  Object.keys(processedIds || {}).forEach(id => {
+    if (processedIds[id] >= cutoff) {
+      pruned[id] = processedIds[id];
+    }
+  });
+  return pruned;
+}
+
+function buildNotificationBody(originalSubject, sender, jiraTask, now) {
+  return [
+    'A new Jira task has been created from an email request:',
+    '',
+    'Task: ' + jiraTask.key,
+    'Subject: ' + originalSubject,
+    'From: ' + sender,
+    'Created: ' + now.toLocaleString(),
+    '',
+    'View task: ' + jiraTask.url,
+    '',
+    'This is an automated notification from the Email-to-Jira system.'
+  ].join('\n');
+}
+
+function buildRawEmail(from, to, subject, bodyText) {
+  return [
+    'From: ' + from,
+    'To: ' + to,
+    'Subject: ' + subject,
+    '',
+    bodyText
+  ].join('\r\n');
+}
 
 function processEmails() {
   console.log('Checking for new emails...');
@@ -21,14 +116,8 @@ function processEmails() {
     console.log('Found ' + threads.length + ' unread email thread(s)');
 
     const scriptProps = PropertiesService.getScriptProperties();
-    const processedThreadIds = JSON.parse(scriptProps.getProperty('processedThreadIds') || '{}');
-
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    Object.keys(processedThreadIds).forEach(id => {
-      if (processedThreadIds[id] < thirtyDaysAgo) {
-        delete processedThreadIds[id];
-      }
-    });
+    const stored = JSON.parse(scriptProps.getProperty('processedThreadIds') || '{}');
+    const processedThreadIds = pruneProcessedIds(stored, Date.now());
 
     let processedCount = 0;
 
@@ -46,7 +135,6 @@ function processEmails() {
       processedCount++;
 
       messages.forEach(msg => { if (msg.isUnread()) msg.markRead(); });
-
       processedThreadIds[threadId] = Date.now();
     });
 
@@ -64,7 +152,7 @@ function handleEmail(message) {
   const sender = message.getFrom() || 'Unknown sender';
   const attachments = message.getAttachments();
 
-  if (sender.indexOf(CONFIG.monitoredEmail) !== -1) {
+  if (isSelfSent(sender, CONFIG.monitoredEmail)) {
     console.log('Skipping self-sent notification: ' + subject);
     return;
   }
@@ -89,38 +177,23 @@ function handleEmail(message) {
 }
 
 function createJiraTask(subject, body, sender) {
-  const taskData = {
-    fields: {
-      project: { key: CONFIG.jiraProject },
-      summary: subject,
-      description: 'From: ' + sender + '\nDate: ' + new Date().toLocaleString() + '\n\n' + body,
-      issuetype: { name: 'Task' }
-    }
-  };
-
+  const payload = buildIssuePayload(subject, body, sender, CONFIG.jiraProject, new Date());
   const auth = Utilities.base64Encode(CONFIG.jiraEmail + ':' + CONFIG.jiraToken);
 
-  const options = {
+  const response = UrlFetchApp.fetch(CONFIG.jiraUrl + '/rest/api/2/issue', {
     method: 'POST',
-    headers: {
-      'Authorization': 'Basic ' + auth,
-      'Content-Type': 'application/json'
-    },
-    payload: JSON.stringify(taskData)
-  };
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Basic ' + auth },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
 
-  const response = UrlFetchApp.fetch(CONFIG.jiraUrl + '/rest/api/2/issue', options);
-
-  if (response.getResponseCode() !== 201) {
-    throw new Error('Jira API error: ' + response.getResponseCode() + ' - ' + response.getContentText());
+  const code = response.getResponseCode();
+  if (code !== 201) {
+    throw new Error('Jira API error: ' + code + ' - ' + response.getContentText());
   }
 
-  const responseData = JSON.parse(response.getContentText());
-
-  return {
-    key: responseData.key,
-    url: CONFIG.jiraUrl + '/browse/' + responseData.key
-  };
+  return parseIssueResult(response.getContentText(), CONFIG.jiraUrl);
 }
 
 function attachFilesToJiraTask(issueKey, attachments) {
@@ -128,18 +201,17 @@ function attachFilesToJiraTask(issueKey, attachments) {
 
   attachments.forEach(attachment => {
     try {
-      const options = {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic ' + auth,
-          'X-Atlassian-Token': 'no-check'
-        },
-        payload: { file: attachment.copyBlob() }
-      };
-
       const response = UrlFetchApp.fetch(
         CONFIG.jiraUrl + '/rest/api/2/issue/' + issueKey + '/attachments',
-        options
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + auth,
+            'X-Atlassian-Token': 'no-check'
+          },
+          payload: { file: attachment.copyBlob() },
+          muteHttpExceptions: true
+        }
       );
 
       if (response.getResponseCode() !== 200) {
@@ -155,24 +227,11 @@ function attachFilesToJiraTask(issueKey, attachments) {
 
 function sendNotification(originalSubject, sender, jiraTask) {
   const subject = 'New Jira Task: ' + jiraTask.key;
-  const bodyText = 'A new Jira task has been created from an email request:\n\n' +
-                   'Task: ' + jiraTask.key + '\n' +
-                   'Subject: ' + originalSubject + '\n' +
-                   'From: ' + sender + '\n' +
-                   'Created: ' + new Date().toLocaleString() + '\n\n' +
-                   'View task: ' + jiraTask.url + '\n\n' +
-                   'This is an automated notification from the Email-to-Jira system.';
+  const bodyText = buildNotificationBody(originalSubject, sender, jiraTask, new Date());
 
   CONFIG.notificationEmails.forEach(email => {
     try {
-      const rawEmail = [
-        'From: ' + CONFIG.monitoredEmail,
-        'To: ' + email,
-        'Subject: ' + subject,
-        '',
-        bodyText
-      ].join('\r\n');
-
+      const rawEmail = buildRawEmail(CONFIG.monitoredEmail, email, subject, bodyText);
       try {
         Gmail.Users.Messages.send({ raw: Utilities.base64EncodeWebSafe(rawEmail) }, 'me');
       } catch (apiError) {
@@ -188,8 +247,7 @@ function sendNotification(originalSubject, sender, jiraTask) {
 function setupTrigger() {
   const triggers = ScriptApp.getProjectTriggers();
   triggers.forEach(trigger => {
-    const fn = trigger.getHandlerFunction();
-    if (fn === 'processEmails' || fn === 'checkForNewEmails') {
+    if (trigger.getHandlerFunction() === 'processEmails') {
       ScriptApp.deleteTrigger(trigger);
     }
   });
@@ -223,4 +281,17 @@ function testSetup() {
   } catch (error) {
     console.error('Setup test failed: ' + error.toString());
   }
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    truncateSummary,
+    buildDescription,
+    buildIssuePayload,
+    parseIssueResult,
+    isSelfSent,
+    pruneProcessedIds,
+    buildNotificationBody,
+    buildRawEmail
+  };
 }
