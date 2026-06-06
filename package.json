@@ -1,19 +1,29 @@
 {
   "name": "email-to-jira-automation",
   "version": "1.0.0",
-  "description": "Automation to create Jira tasks from emails",
+  "description": "Google Apps Script that turns emails into Jira tasks",
   "type": "module",
-  "main": "tests/test.js",
+  "main": "src/automation.cjs",
   "scripts": {
-    "test": "node tests/test.js"
+    "test": "node --test",
+    "lint": "eslint .",
+    "check": "node scripts/check-connection.js"
   },
   "dependencies": {
     "dotenv": "^17.2.2"
   },
   "devDependencies": {
-    "@types/node": "^20.16.11"
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.9.2",
+    "eslint": "^10.4.1",
+    "globals": "^17.6.0"
   },
-  "keywords": ["email", "jira", "automation"],
-  "author": "National Review",
+  "keywords": [
+    "email",
+    "jira",
+    "automation",
+    "google-apps-script"
+  ],
+  "author": "Ashwin Santosh",
   "license": "MIT"
 }
