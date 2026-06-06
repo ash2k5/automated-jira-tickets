@@ -1,0 +1,19 @@
+{
+  "name": "email-to-jira-automation",
+  "version": "1.0.0",
+  "description": "Automation to create Jira tasks from emails",
+  "type": "module",
+  "main": "tests/test.js",
+  "scripts": {
+    "test": "node tests/test.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11"
+  },
+  "keywords": ["email", "jira", "automation"],
+  "author": "National Review",
+  "license": "MIT"
+}
