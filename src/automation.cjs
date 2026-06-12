@@ -108,10 +108,11 @@ function buildNotificationBody(originalSubject, sender, jiraTask, now) {
 }
 
 function buildRawEmail(from, to, subject, bodyText) {
+  const header = value => String(value).replace(/[\r\n]+/g, ' ');
   return [
-    'From: ' + from,
-    'To: ' + to,
-    'Subject: ' + subject,
+    'From: ' + header(from),
+    'To: ' + header(to),
+    'Subject: ' + header(subject),
     '',
     bodyText
   ].join('\r\n');
