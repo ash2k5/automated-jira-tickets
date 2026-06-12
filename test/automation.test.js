@@ -150,3 +150,17 @@ test('buildRawEmail builds CRLF-delimited headers with a blank line before the b
   const raw = buildRawEmail('from@acme.com', 'to@acme.com', 'Hi', 'Body line');
   assert.equal(raw, 'From: from@acme.com\r\nTo: to@acme.com\r\nSubject: Hi\r\n\r\nBody line');
 });
+
+test('buildRawEmail strips CRLF from a subject so it cannot inject a header', () => {
+  const raw = buildRawEmail('from@acme.com', 'to@acme.com', 'Hi\r\nBcc: attacker@evil.com', 'Body line');
+  assert.equal(raw, 'From: from@acme.com\r\nTo: to@acme.com\r\nSubject: Hi Bcc: attacker@evil.com\r\n\r\nBody line');
+  const headerLines = raw.split('\r\n\r\n')[0].split('\r\n');
+  assert.equal(headerLines.length, 3);
+  assert.equal(headerLines.filter(line => /^Bcc:/i.test(line)).length, 0);
+});
+
+test('buildRawEmail strips CRLF from sender and recipient too', () => {
+  const raw = buildRawEmail('from@acme.com\r\nBcc: a@evil.com', 'to@acme.com\nCc: b@evil.com', 'Hi', 'Body');
+  const headerLines = raw.split('\r\n\r\n')[0].split('\r\n');
+  assert.equal(headerLines.length, 3);
+});
