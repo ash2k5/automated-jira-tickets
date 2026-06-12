@@ -122,7 +122,7 @@ function processEmails() {
   console.log('Checking for new emails...');
 
   try {
-    const threads = GmailApp.search('to:' + CONFIG.monitoredEmail + ' is:unread', 0, 50);
+    const threads = GmailApp.search('to:"' + CONFIG.monitoredEmail + '" is:unread', 0, 50);
 
     if (threads.length === 0) {
       console.log('No new emails to monitored address');
