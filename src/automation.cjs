@@ -66,6 +66,21 @@ function isSelfSent(fromHeader, monitoredEmail) {
   return String(fromHeader || '').toLowerCase().indexOf(String(monitoredEmail).toLowerCase()) !== -1;
 }
 
+function parseProcessedIds(raw) {
+  if (!raw) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
 function pruneProcessedIds(processedIds, nowMs, maxAgeMs) {
   const cutoff = nowMs - (maxAgeMs || PROCESSED_ID_TTL_MS);
   const pruned = {};
@@ -116,7 +131,7 @@ function processEmails() {
     console.log('Found ' + threads.length + ' unread email thread(s)');
 
     const scriptProps = PropertiesService.getScriptProperties();
-    const stored = JSON.parse(scriptProps.getProperty('processedThreadIds') || '{}');
+    const stored = parseProcessedIds(scriptProps.getProperty('processedThreadIds'));
     const processedThreadIds = pruneProcessedIds(stored, Date.now());
 
     let processedCount = 0;
@@ -290,6 +305,7 @@ if (typeof module !== 'undefined' && module.exports) {
     buildIssuePayload,
     parseIssueResult,
     isSelfSent,
+    parseProcessedIds,
     pruneProcessedIds,
     buildNotificationBody,
     buildRawEmail

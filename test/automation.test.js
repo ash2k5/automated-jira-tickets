@@ -9,6 +9,7 @@ const {
   buildIssuePayload,
   parseIssueResult,
   isSelfSent,
+  parseProcessedIds,
   pruneProcessedIds,
   buildNotificationBody,
   buildRawEmail
@@ -113,6 +114,28 @@ test('pruneProcessedIds honours a custom max age', () => {
   const now = 1_000_000;
   const result = pruneProcessedIds({ keep: now - 100, drop: now - 1000 }, now, 500);
   assert.deepEqual(result, { keep: now - 100 });
+});
+
+test('parseProcessedIds returns the parsed map for valid JSON', () => {
+  assert.deepEqual(parseProcessedIds('{"abc":123}'), { abc: 123 });
+});
+
+test('parseProcessedIds falls back to an empty map on malformed JSON', () => {
+  assert.deepEqual(parseProcessedIds('not-json'), {});
+  assert.deepEqual(parseProcessedIds('{"abc":'), {});
+});
+
+test('parseProcessedIds falls back to an empty map for missing or empty input', () => {
+  assert.deepEqual(parseProcessedIds(null), {});
+  assert.deepEqual(parseProcessedIds(undefined), {});
+  assert.deepEqual(parseProcessedIds(''), {});
+});
+
+test('parseProcessedIds rejects non-object JSON values', () => {
+  assert.deepEqual(parseProcessedIds('5'), {});
+  assert.deepEqual(parseProcessedIds('"abc"'), {});
+  assert.deepEqual(parseProcessedIds('null'), {});
+  assert.deepEqual(parseProcessedIds('[1,2,3]'), {});
 });
 
 test('buildNotificationBody includes the task key, subject, sender and url', () => {
