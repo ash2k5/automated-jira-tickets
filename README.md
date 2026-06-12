@@ -2,8 +2,6 @@
 
 Converts emails sent to a monitored inbox into Jira tasks, including attachments, and notifies designated team members. Runs on Google Apps Script.
 
-This is a generalized copy of an internship project, kept as a reference. It is not deployed anywhere; the pure logic is extracted into helpers so it can be unit tested locally.
-
 ## Prerequisites
 
 - A Google account with access to the Gmail inbox to monitor
@@ -28,12 +26,6 @@ This is a generalized copy of an internship project, kept as a reference. It is 
 - Skips messages sent from the monitored address so its own notifications are not reprocessed.
 - Emails each configured recipient the new task key and a direct link.
 
-### Limitations
-
-- Deduplication is per Gmail thread. A request resent in a new thread, or a new thread that happens to share a subject, is treated as new and files a second task. This is deliberate: a duplicate task is easy to close, whereas silently dropping a real request is not.
-- Only the first message of a thread is filed, and only its plain-text body. HTML-only formatting and inline images are not preserved in the description (attachments still upload).
-- A reply landing on a thread whose original was processed more than 30 days ago is treated as new and files another task, because the thread ID has aged out of the 30-day record.
-
 ## Configuration
 
 Set these in the `CONFIG` object in `src/automation.cjs`:
@@ -46,14 +38,6 @@ Set these in the `CONFIG` object in `src/automation.cjs`:
 | `jiraProject` | Target Jira project key |
 | `monitoredEmail` | Inbox address that is watched |
 | `notificationEmails` | Recipients of new-task notifications |
-
-### Token security
-
-The Jira API token is stored in clear text inside the `CONFIG` object in the pasted script, so anyone with edit access to the Apps Script project can read it. The `Basic` auth header uses `base64Encode`, which is encoding for transport, not encryption, so it is trivially reversible.
-
-- Create a dedicated, narrowly scoped Jira API token for this automation rather than reusing a personal one.
-- Limit edit access to the Apps Script project to people who are allowed to see the token.
-- Rotate the token immediately if the project is shared, exported, or otherwise exposed.
 
 ## Tests and linting
 
