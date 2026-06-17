@@ -1,86 +1,50 @@
-# Email to Jira Automation
+# email to jira automation
 
-Converts emails sent to a monitored inbox into Jira tasks, including attachments, and notifies designated team members. Runs on Google Apps Script.
+turns emails sent to a monitored inbox into jira tasks (with attachments) and notifies a
+few recipients. runs on google apps script.
 
-This is a generalized copy of an internship project, kept as a reference. It is not deployed anywhere; the pure logic is extracted into helpers so it can be unit tested locally.
+this is a generalized copy of an internship project, kept as a reference. it isn't
+deployed anywhere; the pure logic is pulled into helpers so it can be unit tested locally.
 
-## Prerequisites
+## how it works
 
-- A Google account with access to the Gmail inbox to monitor
-- A Jira Cloud account and API token: https://id.atlassian.com/manage-profile/security/api-tokens
-- Node.js 18+ (only for the tests and the optional local connection check)
+- checks the inbox for unread threads every 10 minutes.
+- creates one jira task per thread from the first message: the subject becomes the summary
+  (capped at jira's 255 chars), the plain-text body becomes the description, and any
+  attachments are uploaded.
+- records processed thread ids so replies don't create duplicates; ids older than 30 days
+  are purged. skips its own notification mails.
+- emails each recipient the new task key and a link.
 
-## Deploy (Google Apps Script)
+dedup is per gmail thread, so a request resent in a new thread files a second task (a
+duplicate is easy to close; silently dropping a real request isn't). only the first
+message's plain-text body is filed.
 
-1. Open https://script.google.com and create a new project.
-2. Copy the contents of `src/automation.cjs` into the project editor. The `module.exports` block at the bottom is inert in Apps Script and can be left in place.
-3. Enable the Gmail advanced service: Services, add "Gmail API".
-4. Edit the `CONFIG` object at the top of the file with your values (see Configuration below).
-5. Run `testSetup` once and approve the requested authorization scopes. Confirm a test task appears in your Jira project.
-6. Run `setupTrigger` to schedule processing every 10 minutes.
+## use it
 
-## How it works
+paste `src/automation.cjs` into a google apps script project, enable the gmail advanced
+service, fill in the `CONFIG` object at the top (jira url, account email + api token,
+project key, the monitored inbox, and the notification recipients), run `testSetup` once
+to authorize, then `setupTrigger` to run it every 10 minutes.
 
-- Searches the monitored inbox for unread threads every 10 minutes.
-- Creates one Jira task per thread from the first message: its subject becomes the summary (capped at Jira's 255-character limit) and its plain-text body becomes the description.
-- Uploads any email attachments to the created task.
-- Records processed thread IDs in Script Properties so replies do not create duplicate tasks. IDs older than 30 days are purged automatically.
-- Skips messages sent from the monitored address so its own notifications are not reprocessed.
-- Emails each configured recipient the new task key and a direct link.
+### token security
 
-### Limitations
+the jira api token sits in clear text in `CONFIG`, and the `Basic` auth header is base64
+(encoding, not encryption). so:
 
-- Deduplication is per Gmail thread. A request resent in a new thread, or a new thread that happens to share a subject, is treated as new and files a second task. This is deliberate: a duplicate task is easy to close, whereas silently dropping a real request is not.
-- Only the first message of a thread is filed, and only its plain-text body. HTML-only formatting and inline images are not preserved in the description (attachments still upload).
-- A reply landing on a thread whose original was processed more than 30 days ago is treated as new and files another task, because the thread ID has aged out of the 30-day record.
+- use a dedicated, narrowly scoped token, not a personal one.
+- limit edit access to the apps script project to people allowed to see the token.
+- rotate it if the project is shared, exported, or exposed.
 
-## Configuration
-
-Set these in the `CONFIG` object in `src/automation.cjs`:
-
-| Setting | Description |
-| --- | --- |
-| `jiraUrl` | Jira Cloud base URL |
-| `jiraEmail` | Jira account email used for API auth |
-| `jiraToken` | Jira API token |
-| `jiraProject` | Target Jira project key |
-| `monitoredEmail` | Inbox address that is watched |
-| `notificationEmails` | Recipients of new-task notifications |
-
-### Token security
-
-The Jira API token is stored in clear text inside the `CONFIG` object in the pasted script, so anyone with edit access to the Apps Script project can read it. The `Basic` auth header uses `base64Encode`, which is encoding for transport, not encryption, so it is trivially reversible.
-
-- Create a dedicated, narrowly scoped Jira API token for this automation rather than reusing a personal one.
-- Limit edit access to the Apps Script project to people who are allowed to see the token.
-- Rotate the token immediately if the project is shared, exported, or otherwise exposed.
-
-## Tests and linting
+## tests
 
 ```bash
 npm install
-npm test      # unit tests for the pure helpers (node --test)
-npm run lint  # eslint
+npm test      # unit tests for the pure helpers
+npm run lint
 ```
 
-## Local connection check (optional)
+`npm run check` creates one test issue to verify jira credentials locally (copy
+`.env.example` to `.env` and fill in the `JIRA_*` values first).
 
-Creates one test issue to verify Jira credentials without deploying.
-
-```bash
-cp .env.example .env   # fill in the JIRA_* values
-npm run check
-```
-
-## Project structure
-
-```
-src/automation.cjs        Apps Script deploy file + pure helpers
-test/automation.test.js   Unit tests for the helpers
-scripts/check-connection.js  Local Jira credential check (Node)
-.env.example              Local check configuration template
-```
-
-## License
-
-MIT, see [LICENSE](LICENSE).
+MIT.

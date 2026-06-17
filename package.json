@@ -1,7 +1,7 @@
 {
   "name": "email-to-jira-automation",
   "version": "1.0.0",
-  "description": "Google Apps Script that turns emails into Jira tasks",
+  "description": "google apps script that turns emails into jira tasks",
   "type": "module",
   "main": "src/automation.cjs",
   "scripts": {
